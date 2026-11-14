@@ -13,13 +13,20 @@ Deno.serve(async req=>{
  if(Deno.env.get("ROUTING_ENABLED")!=="true")return json({error:"Lead intake is not activated yet"},503);
  try{
   const body=await req.json();
-  const {name,email,pickup_zip,destination_zip,move_date,company,turnstile_token}=body;
+  const {name,phone,email,pickup_zip,destination_zip,move_date,move_type,bedrooms,access_details,additional_details,preferred_contact_method,consent_to_contact,company,turnstile_token}=body;
   if(typeof name!=="string"||name.trim().length<2||name.length>120||
+     typeof phone!=="string"||!/^[+0-9() .-]{7,25}$/.test(phone)||phone.replace(/\D/g,"").length<10||phone.replace(/\D/g,"").length>15||
      typeof email!=="string"||!/^\S+@\S+\.\S+$/.test(email)||email.length>254||
      typeof pickup_zip!=="string"||!/^\d{5}$/.test(pickup_zip)||
      (destination_zip && (typeof destination_zip!=="string"||!/^\d{5}$/.test(destination_zip)))||
      (company && (typeof company!=="string"||!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(company)))||
-     (move_date && (typeof move_date!=="string"||!/^\d{4}-\d{2}-\d{2}$/.test(move_date))))
+     (move_date && (typeof move_date!=="string"||!/^\d{4}-\d{2}-\d{2}$/.test(move_date)))||
+     !["apartment","house","office","other"].includes(move_type)||
+     !Number.isInteger(bedrooms)||bedrooms<0||bedrooms>20||
+     typeof access_details!=="string"||access_details.length>500||
+     typeof additional_details!=="string"||additional_details.length>2000||
+     !["phone","email","either"].includes(preferred_contact_method)||
+     consent_to_contact!==true)
    return json({error:"Invalid form details"},400);
   const secret=Deno.env.get("TURNSTILE_SECRET_KEY");
   if(!secret||typeof turnstile_token!=="string")return json({error:"Verification unavailable"},503);
@@ -53,7 +60,10 @@ Deno.serve(async req=>{
   }
   const {error}=await db.from("leads").insert({
    company_id:companyId,customer_name:name.trim(),customer_email:email.trim(),
-   pickup_zip,destination_zip:destination_zip||null,move_date:move_date||null
+   pickup_zip,destination_zip:destination_zip||null,move_date:move_date||null,
+   customer_phone:phone.trim(),move_type,bedrooms,access_details:access_details.trim()||null,
+   additional_details:additional_details.trim()||null,preferred_contact_method,
+   consent_to_contact:true,consent_recorded_at:new Date().toISOString()
   });
   if(error)throw error;
   return json({ok:true,message:"Your request was submitted."},201);
