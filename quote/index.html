@@ -32,7 +32,7 @@ const slug=params.get("company");
 const validSlug=slug && /^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug);
 document.getElementById("source").textContent=validSlug?"Quote request for "+slug:"MoveFlow AI general quote request";
 const submit=document.getElementById("submit"),msg=document.getElementById("msg");
-const configured=siteKey!=="0x4AAAAAAF9wb4M3F_pGOPll";
+const configured=Boolean(siteKey && functionUrl);
 if(configured){submit.disabled=false;msg.textContent="Complete the form and security check to request a quote.";}
 document.getElementById("quote-form").addEventListener("submit",async event=>{
  event.preventDefault();
