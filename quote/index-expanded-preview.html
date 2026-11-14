@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MoveFlow AI | Request a Moving Quote</title>
+<meta name="description" content="Request a moving quote through MoveFlow AI.">
+<style>
+:root{color-scheme:dark}body{margin:0;background:radial-gradient(circle at 75% 0,#103b75 0,#08152a 52%);color:#eaf2ff;font:16px system-ui,Arial}
+.wrap{max-width:760px;margin:35px auto;padding:20px}.panel{background:#122541;border:1px solid #2b4b76;border-radius:18px;padding:26px;margin:18px 0;box-shadow:0 15px 45px #0003}
+h1{font-size:clamp(26px,5vw,38px)}input,select,textarea,button{font:inherit;padding:13px;border-radius:9px;box-sizing:border-box}input,select,textarea{background:#07162b;color:white;width:100%;border:1px solid #42618a;margin:7px 0 16px}textarea{min-height:90px;resize:vertical}.checkline{display:flex;gap:10px;align-items:flex-start;font-weight:400}.checkline input{width:auto;margin:4px 0}button{background:#1674ef;color:white;cursor:pointer;border:0;width:100%;font-weight:650}button:disabled{opacity:.45;cursor:not-allowed}a{color:#77b9ff}.muted{color:#afc2dc}.hint{font-size:13px}label{display:block;font-weight:550}#msg{white-space:pre-wrap;margin-top:14px}.hidden{display:none}.cf-turnstile{margin:14px 0}
+</style>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script></head>
+<body><main class="wrap"><a href="../">← MoveFlow AI</a><h1>Request a moving quote</h1>
+<p class="muted" id="source">MoveFlow AI general quote request</p>
+<section class="panel"><h2>Tell us about your move</h2>
+<form id="quote-form">
+<label for="name">Full name</label><input id="name" name="name" autocomplete="name" maxlength="120" required minlength="2">
+<label for="phone">Phone number</label><input id="phone" name="phone" type="tel" autocomplete="tel" maxlength="25" required placeholder="(301) 555-0123">
+<label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" maxlength="254" required>
+<label for="pickup">Pickup ZIP code</label><input id="pickup" name="pickup_zip" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" required placeholder="20715">
+<label for="destination">Destination ZIP code</label><input id="destination" name="destination_zip" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" required>
+<label for="date">Preferred moving date (optional)</label><input id="date" name="move_date" type="date">
+<label for="move_type">Type of move</label><select id="move_type" name="move_type" required><option value="">Select move type</option><option value="apartment">Apartment</option><option value="house">House</option><option value="office">Office</option><option value="other">Other</option></select>
+<label for="bedrooms">Number of bedrooms</label><select id="bedrooms" name="bedrooms" required><option value="">Select bedrooms</option><option value="0">Studio / 0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6+</option></select>
+<label for="access_details">Stairs or elevator</label><select id="access_details" name="access_details" required><option value="">Select access</option><option value="None / ground floor">None / ground floor</option><option value="Stairs">Stairs</option><option value="Elevator">Elevator</option><option value="Both stairs and elevator">Both stairs and elevator</option><option value="Not sure">Not sure</option></select>
+<label for="additional_details">Additional moving details (optional)</label><textarea id="additional_details" name="additional_details" maxlength="2000" placeholder="Large furniture, special access, or other details. Do not include sensitive information."></textarea>
+<label for="preferred_contact_method">Preferred contact method</label><select id="preferred_contact_method" name="preferred_contact_method" required><option value="">Choose how to be contacted</option><option value="phone">Phone call</option><option value="email">Email</option><option value="either">Either</option></select>
+<label class="checkline"><input type="checkbox" name="consent_to_contact" required> I agree that MoveFlow AI may share my request with the assigned moving company and that the company may contact me about this quote using my selected contact method. This is not consent to marketing messages.</label>
+<p class="hint muted">By submitting, you agree to share these details with the moving company assigned to your request so it can contact you about a quote. Please do not include sensitive personal information.</p>
+<div class="cf-turnstile" data-sitekey="0x4AAAAAAF9wb4M3F_pGOPll" data-theme="dark"></div>
+<button type="submit" id="submit" disabled>Submit quote request</button>
+<p id="msg" role="status" aria-live="polite" class="muted">Secure automatic quote requests are not yet activated.</p>
+</form></section>
+<section class="panel"><h2>Existing quote form</h2><p class="muted">While automatic routing is being tested, you can still use our existing form. These requests are not automatically assigned to a company.</p><a href="https://docs.google.com/forms/d/e/1FAIpQLSd5DvXuHvs3Wu-Vvp4E8Ia01_spPHNq97Kpkdxj49ACoDoTKg/viewform?usp=dialog">Open current moving quote form</a></section>
+</main>
+<script>
+const siteKey="0x4AAAAAAF9wb4M3F_pGOPll";
+const functionUrl="https://jmatopczikrdrooxrtfy.supabase.co/functions/v1/route-lead";
+const params=new URLSearchParams(location.search);
+const slug=params.get("company");
+const validSlug=slug && /^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug);
+document.getElementById("source").textContent=validSlug?"Quote request for "+slug:"MoveFlow AI general quote request";
+const submit=document.getElementById("submit"),msg=document.getElementById("msg");
+const configured=Boolean(siteKey && functionUrl);
+if(configured){submit.disabled=false;msg.textContent="Complete the form and security check to request a quote.";}
+document.getElementById("quote-form").addEventListener("submit",async event=>{
+ event.preventDefault();
+ if(!configured)return;
+ const form=event.currentTarget;
+ const token=form.querySelector('[name="cf-turnstile-response"]')?.value;
+ if(!token){msg.textContent="Please complete the security verification.";return;}
+ const data=new FormData(form);
+ const payload={name:data.get("name"),phone:data.get("phone"),email:data.get("email"),pickup_zip:data.get("pickup_zip"),destination_zip:data.get("destination_zip"),move_date:data.get("move_date"),move_type:data.get("move_type"),bedrooms:Number(data.get("bedrooms")),access_details:data.get("access_details"),additional_details:data.get("additional_details"),preferred_contact_method:data.get("preferred_contact_method"),consent_to_contact:data.get("consent_to_contact")==="on",turnstile_token:token};
+ if(validSlug)payload.company=slug;
+ submit.disabled=true;msg.textContent="Submitting your request...";
+ try{
+  const response=await fetch(functionUrl,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});
+  const result=await response.json();
+  if(!response.ok)throw new Error(result.error||"Unable to submit request");
+  form.reset();msg.textContent="Your quote request was submitted successfully.";
+ }catch(error){msg.textContent=error.message||"Unable to submit request. Please try again.";}
+ finally{if(window.turnstile)window.turnstile.reset();submit.disabled=false;}
+});
+</script></body></html>
